@@ -9,35 +9,38 @@
 
 
 ;; define your app data so that it doesn't get over-written on reload
-(defonce app-state (atom {:text "Clojure Joust!"}))
+(defonce app-state (atom {:text "Clojure Joust!"
+                          :player1 {:avatar :lion}
+                          :player2 {:avatar :bear}}))
+
+(def avatars {:lion "https://blog.udemy.com/wp-content/uploads/2014/04/shutterstock_15856930.jpg"
+              :bear "https://www.exploringnature.org/wordpress/wp-content/uploads/2015/01/bear_standing_up.jpg"})
 
 (defn get-app-element []
   (gdom/getElement "app"))
 
-(defn hello-world []
+(defn player-selection []
+  [:div.row
+   [:div.col.s5.m3.offset-m2.white
+    [:img.character-pick
+     {:src ""}]
+    [:a.left.arrow [:i.material-icons "chevron_left"]]
+    [:a.arrow.right [:i.material-icons "chevron_right"]]
+    [:span "Player 1"]]
+   [:div.col.s2.center.middle.full-h "VS"]
+   [:div.col.s5.m3.white
+    [:img.character-pick
+     {:src ""}]
+    [:span "Player 2"]]])
+
+(defn main-page []
   [:div.container
    [:h4 (:text @app-state)
     [:img {:src "icon.png"}]]
-   [:div.row
-    [:div.col.s4.white
-     "test"]
-    [:div.col.s4]
-    [:div.col.s4.white]]
-   ;; [:svg.main {:width "100%" :height 400
-   ;;             :fill "white"}
-   ;;  [:defs
-   ;;   [:pattern {:id "bgimg" :pattern-units "userSpaceOnUse" :x 0:y 0
-   ;;              :width "100%" :height "100%"}
-   ;;    [:image {:xlinkHref "/images/waterfall.png" :preserve-aspect-ratio "none"
-   ;;             :width "100%" :height "100%"} ]]]
-   ;;  [:rect {:width "100%" :height "100%" :fill "url(#bgimg)"}]
-   ;;  ]
-   ;; [:div.character-pick.left]
-   ;; [:div.character-pick.right]
-   ])
+   [player-selection]])
 
 (defn mount [el]
-  (reagent/render-component [hello-world] el))
+  (reagent/render-component [main-page] el))
 
 (defn mount-app-element []
   (when-let [el (get-app-element)]
