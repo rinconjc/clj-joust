@@ -1,20 +1,46 @@
 /* some style */
-
+html,
 body{
   background-color:#444;
-  color:#00FA9A; //
-  height: 100%;
+  color:#00FA9A;
+  height:100% !important ;
 }
-
-#app{
-  height:100%;
-}
-
 h1 {
   font-weight:1;
   text-decoration: underline;
   text-decoration-color: #20B2AA;
 }
+
+#app{
+  height:100%;
+}
+.box{
+  display: flex;
+  flex-flow: column;
+  height: 100%;
+}
+
+.box .content{
+  flex: 1 1 auto;
+}
+
+.arena{
+  /* height: 600px; */
+  background: url(https://hdwallpaper20.com/wp-content/uploads/2016/05/waterfall-wallpaper-beautiful-waterfalls-hd-wallpaper-high-definition.jpg);
+  /* background-position: center; */
+  background-size: cover;
+  position: relative;
+}
+
+.platform {
+  position: absolute;
+  height: 100px;
+  left: 150px;
+  right: 150px;
+  background-color: #444;
+  bottom: 100px;
+}
+
 .main {
   margin-top:80px;
 }
@@ -25,10 +51,4 @@ h1 {
 }
 .full-h{
   height:100%;
-}
-
-.arrow {
-  color:red;
-  position:relative;
-  top:-50% !important;
 }
