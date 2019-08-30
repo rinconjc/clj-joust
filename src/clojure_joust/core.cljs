@@ -1,7 +1,8 @@
 (ns ^:figwheel-hooks clojure-joust.core
   (:require
    [goog.dom :as gdom]
-   [reagent.core :as reagent :refer [atom]]))
+   [reagent.core :as r :refer [atom]]
+   [oops.core :refer [oget ocall oset!]]))
 
 (println "This text is printed from src/clojure_joust/core.cljs. Go ahead and edit it and see reloading in action.")
 
@@ -39,12 +40,23 @@
     [:div.center [:a.btn {:on-click #(swap! app-state assoc :page :arena)} "Start"]]]])
 
 (defn game-arena []
-  [:div.box.center
-   [:h2 "Jousting Arena"]
-   [:div.arena.content
-    [:canvas {:id "arena"}]
-    [:div.platform]]
-   ])
+  (r/create-class
+   {:reagent-render
+    (fn []
+      [:div.box.center
+       [:h2 "Jousting Arena"]
+       [:div.arena.content
+        [:canvas {:id "arena" :ref "arena"}]
+        [:div.platform]]
+       ])
+    :component-did-mount
+    (fn[c]
+      (let [ctx (-> c (oget "refs") (oget :arena) (ocall "getContext" "2d"))]
+        (oset! ctx "fillStyle" "green")
+        (ocall ctx "fillRect" 10 10 150 150)
+        )
+      )}
+   ))
 
 (defn setup [])
 
@@ -59,7 +71,7 @@
    ])
 
 (defn mount [el]
-  (reagent/render-component [main-page] el))
+  (r/render-component [main-page] el))
 
 (defn mount-app-element []
   (swap! app-state update :page #(or % :players))

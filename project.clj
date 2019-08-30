@@ -9,7 +9,8 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.339"]
                  [reagent "0.8.1"]
-                 [quil "3.0.0"]]
+                 [quil "3.0.0"]
+                 [binaryage/oops "0.7.0"]]
 
   :source-paths ["src"]
 
