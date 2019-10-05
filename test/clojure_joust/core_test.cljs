@@ -1,10 +1,7 @@
 (ns clojure-joust.core-test
     (:require
      [cljs.test :refer-macros [deftest is testing]]
-     [clojure-joust.core :refer [multiply]]))
+     [clojure-joust.core :as core]))
 
 (deftest multiply-test
-  (is (= (* 1 2) (multiply 1 2))))
-
-(deftest multiply-test-2
-  (is (= (* 75 10) (multiply 10 75))))
+  (is (= (* 1 2) (* 1 2))))
