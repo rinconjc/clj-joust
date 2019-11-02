@@ -89,7 +89,7 @@
 
 (defn main-page []
   [:div.box
-   [:h4 "Clojure Joust!"
+   [:h4 [:a.brand-logo {:href "#" :on-click m/home} "Clojure Joust!"]
     [:img {:src "icon.png"}]]
    (view @app-state)])
 

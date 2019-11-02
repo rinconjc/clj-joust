@@ -149,3 +149,7 @@
     (swap! player assoc :avatar
                 (nth avatar-names
                      (swap! i #(if (zero? %) max-i (f %)))))))
+
+(defn home [e]
+  (swap! app-state #(->PlayerSelection (:player1 %) (:player2 %)))
+  (doto e (ocall "preventDefault") (ocall "stopPropagation")))
