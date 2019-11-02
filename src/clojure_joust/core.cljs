@@ -9,16 +9,18 @@
   (gdom/getElement "app"))
 
 (defn player-setup [player]
-  (r/with-let [i (atom 0)]
+  (r/with-let [i (atom 0)
+               max-i (dec (count m/avatar-names))]
     [:div
      [:img.character-pick {:src (m/avatars (:avatar @player))}]
-     [:a.left {:href "#" :on-click #(m/change-avatar player i dec)}
+     [:a.left {:href "#" :on-click (fn[] (swap! player assoc :avatar
+                                                (nth m/avatar-names (swap! i #(if (zero? %) max-i (dec %))))))}
       [:i.material-icons "chevron_left"]]
-     [:a.right {:href "#" :on-click #(m/change-avatar player i inc)}
+     [:a.right {:href "#" :on-click (fn[] (swap! player assoc :avatar
+                                                 (nth m/avatar-names (swap! i #(if (= % max-i) 0 (inc %)))))) }
       [:i.material-icons "chevron_right"]]
-     [:div.input-field.col.s10
-      [:input.white-text {:value (:name @player)
-                          :on-change #(swap! player assoc :name (-> % .-target .-value))}]]]))
+     [:input.white-text {:value (:name @player)
+                         :on-change #(swap! player assoc :name (-> % .-target .-value))}]]))
 
 (defn player-selection-page []
   [:div
@@ -38,37 +40,58 @@
   [:image {:x x :y y :href (m/avatars avatar) :width m/avatar-width :height m/avatar-height}])
 
 (defn handle-keys [e]
-  (when-not (:ended? @app-state)
-    (case (-> (oget e "key") str/lower-case)
-      "l" (m/move-right :player2)
-      "j" (m/move-left :player2)
-      "i" (m/jump :player2)
-      "a" (m/move-left :player1)
-      "w" (m/jump :player1)
-      "d" (m/move-right :player1)
-      nil)))
+  (let [key (-> (oget e "key") str/lower-case)]
+    (if (:ended? @app-state)
+      (case key
+        " " (m/start-game)
+        nil)
+      (case key
+          "l" (m/move-right :player2)
+          "j" (m/move-left :player2)
+          "i" (m/jump :player2)
+          "a" (m/move-left :player1)
+          "w" (m/jump :player1)
+          "d" (m/move-right :player1)
+          nil))))
+
+(defn player-score [p]
+  (str (:name p) " : " (:score p)))
+
+(defn winner-banner [game]
+  [:text.banner {:x 25 :y 40 :text-length 150} "Winner  is  "  (-> game :winner :name)])
 
 (defn game-arena []
   [:div.center {:tab-index 0 :on-key-down handle-keys}
    [:svg.arena {:view-box "0 0 200 100" :height "80%" :width "95%" }
     [:rect {:x 25 :y 70 :width "150" :height "10" :fill "#555"}]
-    [player (@app-state :player1)]
-    [player (@app-state :player2)]]
+    [player (:player1 @app-state)]
+    [player (:player2 @app-state)]
+    (when (:ended? @app-state)
+      [winner-banner @app-state])]
    [:div.row
-    [:div.col.s6
+    [:div.col.s4
      [:h5 "ROUND:" (:round @app-state)]]
-    [:div.col.s6
-     [:h5 "SCORE " (-> @app-state :player1 (map [:name :score]) str/join) ":"
-      (-> @app-state :player2 (map [:name :score]) str/join)]]]])
+    [:div.col.s2 [:h5 "SCORE"]]
+    [:div.col.s3 [:h5 (player-score (:player1 @app-state))]]
+    [:div.col.s3 [:h5 (player-score (:player2 @app-state))]]]])
+
+;; model views
+(defmulti view type)
+
+(defmethod view m/PlayerSelection [state]
+  [player-selection-page])
+
+(defmethod view m/Game [state]
+  [game-arena])
+
+(defmethod view :default [state]
+  [:p "no view for " state])
 
 (defn main-page []
   [:div.box
    [:h4 "Clojure Joust!"
     [:img {:src "icon.png"}]]
-   (condp instance? @app-state
-     m/PlayerSelection [#'player-selection-page]
-     m/Game [#'game-arena]
-     [:p "Sorry can't display:" @app-state])])
+   (view @app-state)])
 
 (defn mount [el]
   (r/render-component [main-page] el))

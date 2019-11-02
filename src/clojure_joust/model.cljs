@@ -16,7 +16,7 @@
 (def avatar-width 25)
 
 (def elasticity 0.8)
-(def max-rounds 5)
+(def max-rounds 4)
 
 (def avatars {:bunny  "images/bugsbunny.png"
               :pea "images/peashooter.png"
@@ -79,8 +79,6 @@
          (neg? (* (js/Math.sign (- x1 x2))
                   (- (first v1) (first v2)))))))
 
-;; dist p1 p2: x1-x2 x10+v1t-(x20+v2t)= v1-v2;
-
 (defn velocity-and-position [{:keys [x y velocity]}]
   (let [off-platform? (or (< x avatar-min-x) (> x avatar-max-x))
         on-platform? (and (not off-platform?) (>= y avatar-max-y))
@@ -98,8 +96,7 @@
   (let [[velocity [x y]] (velocity-and-position player)]
     (assoc player :x x :y y :velocity velocity)))
 
-
-(defn end-game [{:keys [player1 player2 :as state]}]
+(defn end-game [{:keys [player1 player2] :as state}]
   (assoc state
          :ended? true
          :winner
@@ -107,8 +104,8 @@
 
 (defn update-game [state]
   (let [[player1 player2] (map #(update-player (% state)) [:player1 :player2])
-        round-winner (cond (fallen? (state :player1)) :player2
-                           (fallen? (state :player2)) :player1)
+        round-winner (cond (fallen? (:player1 state)) :player2
+                           (fallen? (:player2 state)) :player1)
         state (if round-winner
                 (-> state
                     (update :round inc)
@@ -126,12 +123,11 @@
 
 (defn animate []
   (ocall js/window "requestAnimationFrame"
-         #(do (swap! app-state update-game)
-              (animate))))
+         #(when-not (:ended? (swap! app-state update-game))
+           (animate))))
 
 (defn start-game []
-  (swap! app-state #(-> % (assoc :page :arena)
-                        reset-players))
+  (swap! app-state #(reset-players (new-game (:player1 %) (:player2 %))))
   (animate))
 
 (defn move-right [player]
