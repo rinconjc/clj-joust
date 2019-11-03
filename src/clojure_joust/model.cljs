@@ -18,13 +18,20 @@
 (def elasticity 0.8)
 (def max-rounds 4)
 
-(def avatars {:bunny  "images/bugsbunny.png"
-              :pea "images/peashooter.png"
-              :bandicoot "images/bandicoot.png"
-              :lycanroc "images/lycanroc.png"
-              :king-boo "images/king-boo.png"
-              :gooigi "images/gooigi.png"})
+(def avatars* {:bunny {:image  "images/bugsbunny" }
+               :pea {:image "images/peashooter" }
+               :bandicoot {:image "images/bandicoot" }
+               :lycanroc {:image "images/lycanroc" }
+               :king-boo {:image "images/king-boo" }
+               :gooigi {:image "images/gooigi" }
+               :bull-eye {:image "images/bulleye"}})
 
+(def avatars (into {} (for [[k v] avatars*] [k (:image v)])))
+
+(def avatar-names (keys avatars))
+
+(defn avatar-image [avatar face]
+  (some-> avatars* avatar :image (str "-" (name face) ".png" )))
 ;; Model
 (defrecord Game [player1 player2 round winner])
 (defrecord Player [name avatar score])
@@ -44,15 +51,17 @@
   (->PlayerSelection (mk-player "Player1" :bandicoot) (mk-player "Player2" :lycanroc)))
 
 (defn new-game [player1 player2]
-  (->Game player1 player2 1 nil))
+  (->Game (assoc player1 :score 0) (assoc player2 :score 0) 1 nil))
 
 (defonce app-state (atom nil))
 
-(def avatar-names (keys avatars))
-
 (defn reset-players [state]
-  (-> state (update :player1 assoc :x 25 :y 40 :velocity [0 0])
-      (update :player2 assoc :x 150 :y 40 :velocity [0 0])))
+  (let [reset-fn (fn [player x face]
+                   (as-> player p
+                     (assoc p :x x :y 40 :velocity [0 0] :face face)))]
+    (-> state
+        (update :player1 reset-fn 25 :right)
+        (update :player2 reset-fn 150 :left))))
 
 (defn fallen? [player]
   (> (:y player) scene-max-y))
@@ -124,17 +133,23 @@
 (defn animate []
   (ocall js/window "requestAnimationFrame"
          #(when-not (:ended? (swap! app-state update-game))
-           (animate))))
+            (animate))))
 
 (defn start-game []
   (swap! app-state #(reset-players (new-game (:player1 %) (:player2 %))))
   (animate))
 
 (defn move-right [player]
-  (swap! app-state update player update-in [:velocity 0] #(+ max-speed-x (min 0 %))))
+  (swap! app-state update player
+         (fn [player] (-> player
+                          (update-in [:velocity 0] #(+ max-speed-x (min 0 %)))
+                          (assoc :face :right)))))
 
 (defn move-left [player]
-  (swap! app-state update player update-in [:velocity 0] #(- (max 0 %) max-speed-x)))
+  (swap! app-state update player
+         (fn [player] (-> player
+                          (update-in [:velocity 0] #(- (max 0 %) max-speed-x))
+                          (assoc :face :left)))))
 
 (defn jump [player]
   (swap! app-state update player update-in [:velocity 1] #(if (zero? %) jump-speed-y %)))
@@ -147,8 +162,8 @@
 (defn change-avatar [player i f]
   (let [max-i (dec (count avatar-names))]
     (swap! player assoc :avatar
-                (nth avatar-names
-                     (swap! i #(if (zero? %) max-i (f %)))))))
+           (nth avatar-names
+                (swap! i #(if (zero? %) max-i (f %)))))))
 
 (defn home [e]
   (swap! app-state #(->PlayerSelection (:player1 %) (:player2 %)))

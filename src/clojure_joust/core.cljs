@@ -8,11 +8,11 @@
 (defn get-app-element []
   (gdom/getElement "app"))
 
-(defn player-setup [player]
+(defn player-setup [player face]
   (r/with-let [i (atom 0)
                max-i (dec (count m/avatar-names))]
     [:div
-     [:img.character-pick {:src (m/avatars (:avatar @player))}]
+     [:img.character-pick {:src (m/avatar-image (:avatar @player) face)}]
      [:a.left {:href "#" :on-click (fn[] (swap! player assoc :avatar
                                                 (nth m/avatar-names (swap! i #(if (zero? %) max-i (dec %))))))}
       [:i.material-icons "chevron_left"]]
@@ -28,16 +28,18 @@
     [:div.col.s12.center
      [:h4 "Select Players"]]
     [:div.col.s5.m3.offset-m2
-     [player-setup (r/cursor app-state [:player1])]]
+     [player-setup (r/cursor app-state [:player1]) :right]]
     [:div.col.s2.center [:h3 "VS"]]
     [:div.col.s5.m3
-     [player-setup (r/cursor app-state [:player2])]]]
+     [player-setup (r/cursor app-state [:player2]) :left]]]
    [:div.row
     [:div.col.s12
      [:div.center [:a.btn {:on-click m/start-game} "Start"]]]]])
 
-(defn player [{:keys [x y avatar]}]
-  [:image {:x x :y y :href (m/avatars avatar) :width m/avatar-width :height m/avatar-height}])
+(defn player [{:keys [x y avatar face]}]
+  [:image {:x x :y y :href (m/avatar-image avatar face)
+           :width m/avatar-width
+           :height m/avatar-height}])
 
 (defn handle-keys [e]
   (let [key (-> (oget e "key") str/lower-case)]
