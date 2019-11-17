@@ -56,11 +56,11 @@
           "d" (m/move-right :player1)
           nil))))
 
-(defn player-score [p]
-  (str (:name p) " : " (:score p)))
+(defn player-score [{:keys [name score]}]
+  (str name " : " (:rounds score) "/" (:points score)))
 
 (defn winner-banner [game]
-  [:text.banner {:x 25 :y 40 :text-length 150} "Winner  is  "  (-> game :winner :name)])
+  [:text.banner {:x 25 :y 40 :text-length 150} "Winner  is  "  (-> ((game :winner) game) :name)])
 
 (defn game-arena []
   [:div.center {:tab-index 0 :on-key-down handle-keys}

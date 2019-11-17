@@ -17,6 +17,8 @@
 
 (def elasticity 0.8)
 (def max-rounds 4)
+(def points-by-round 5)
+(def rounds-to-win 3)
 
 (def avatars* {:bunny {:image  "images/bugsbunny" }
                :pea {:image "images/peashooter" }
@@ -36,6 +38,7 @@
 (defrecord Game [player1 player2 round winner])
 (defrecord Player [name avatar score])
 (defrecord PlayerSelection [player1 player2])
+(defrecord Score [rounds points])
 
 (defn mk-player [name avatar]
   ;; (->Player name avatar 0)
@@ -51,7 +54,8 @@
   (->PlayerSelection (mk-player "Player1" :bandicoot) (mk-player "Player2" :lycanroc)))
 
 (defn new-game [player1 player2]
-  (->Game (assoc player1 :score 0) (assoc player2 :score 0) 1 nil))
+  (->Game (assoc player1 :score (->Score 0 0))
+          (assoc player2 :score (->Score 0 0)) 1 nil))
 
 (defonce app-state (atom nil))
 
@@ -111,24 +115,40 @@
          :winner
          (if (> (:score player1) (:score player2)) player1 player2)))
 
+(defn update-after-collision [{:keys [player1 player2] :as state}]
+  (-> state
+      (update-in [:player1 :velocity] velocity-after-collision (:velocity player2))
+      (update-in [:player2 :velocity] velocity-after-collision (:velocity player1))))
+
+(defn update-score
+  "
+  Update winner round score
+  if round score reaches round-winning-score, increase game score, and game round
+  if game score reaches game-winning-score, end game with winner
+  "
+  [game]
+  (when-let [winner (cond (fallen? (:player1 game)) :player2
+                          (fallen? (:player2 game)) :player1)]
+    (let [new-score (update (get-in game [winner :score]) :points inc)
+          state (if (= (:points new-score) points-by-round)
+                  (as-> game g
+                    (assoc-in g [winner :score]
+                              (-> new-score (update :rounds inc)))
+                    (assoc-in g [:player1 :score :points] 0)
+                    (assoc-in g [:player2 :score :points] 0)
+                    (if (= (inc (:rounds new-score)) rounds-to-win)
+                      (assoc g :winner winner :ended? true)
+                      (update g :round inc)))
+                  (-> game (assoc-in [winner :score] new-score)))]
+      (reset-players state))))
+
 (defn update-game [state]
-  (let [[player1 player2] (map #(update-player (% state)) [:player1 :player2])
-        round-winner (cond (fallen? (:player1 state)) :player2
-                           (fallen? (:player2 state)) :player1)
-        state (if round-winner
-                (-> state
-                    (update :round inc)
-                    (update-in [round-winner :score] inc))
-                state)]
-    (if round-winner
-      (if (= max-rounds (:round state))
-        (end-game state)
-        (reset-players state))
-      (if (bumped? player1 player2)
-        (assoc state
-               :player1 (update player1 :velocity velocity-after-collision (:velocity player2))
-               :player2 (update player2 :velocity velocity-after-collision (:velocity player1)))
-        (assoc state :player1 player1 :player2 player2)))))
+  (as-> state s
+    (update s :player1 update-player state)
+    (update s :player2 update-player state)
+    (or (update-score s) s)
+    (if (bumped? (:player1 s) (:player2 s))
+      (update-after-collision s) s)))
 
 (defn animate []
   (ocall js/window "requestAnimationFrame"
