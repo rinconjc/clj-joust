@@ -26,7 +26,8 @@
                :lycanroc {:image "images/lycanroc" }
                :king-boo {:image "images/king-boo" }
                :gooigi {:image "images/gooigi" }
-               :bull-eye {:image "images/bulleye"}})
+               :bull-eye {:image "images/bulleye"}
+               :poke1 {:image "images/poke1"}})
 
 (def avatars (into {} (for [[k v] avatars*] [k (:image v)])))
 
