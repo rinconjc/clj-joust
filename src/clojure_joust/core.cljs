@@ -48,34 +48,39 @@
         " " (m/start-game)
         nil)
       (case key
-          "l" (m/move-right :player2)
-          "j" (m/move-left :player2)
-          "i" (m/jump :player2)
-          "a" (m/move-left :player1)
-          "w" (m/jump :player1)
-          "d" (m/move-right :player1)
-          nil))))
+        "l" (m/move-right :player2)
+        "j" (m/move-left :player2)
+        "i" (m/jump :player2)
+        "a" (m/move-left :player1)
+        "w" (m/jump :player1)
+        "d" (m/move-right :player1)
+        nil))))
 
 (defn player-score [{:keys [name score]}]
-  (str name " : " (:rounds score) "/" (:points score)))
+  [:div.col.s12.white-text
+   [:div.col.s4 [:h5 name]]
+   [:div.col.s1.cyan.darken-4 [:h5 (:rounds score)]]
+   [:div.col.s1 [:h5 (:points score)]]])
 
 (defn winner-banner [game]
-  [:text.banner {:x 25 :y 40 :text-length 150} "Winner  is  "  (-> ((game :winner) game) :name)])
+  [:text.banner {:x 25 :y 40 :text-length 150}
+   "Winner  is  "  (->> game :winner (get game) :name)])
+
+(defn score-board [game]
+  [:rect {:x 10 :y 90 :width 50 :height 5} :fill "#666" :fill-opacity "0.9"])
 
 (defn game-arena []
   [:div.center {:tab-index 0 :on-key-down handle-keys}
    [:svg.arena {:view-box "0 0 200 100" :height "80%" :width "95%" }
     [:rect {:x 25 :y 70 :width "150" :height "10" :fill "#555"}]
+    ;; [score-board @app-state]
     [player (:player1 @app-state)]
     [player (:player2 @app-state)]
     (when (:ended? @app-state)
       [winner-banner @app-state])]
    [:div.row
-    [:div.col.s4
-     [:h5 "ROUND:" (:round @app-state)]]
-    [:div.col.s2 [:h5 "SCORE"]]
-    [:div.col.s3 [:h5 (player-score (:player1 @app-state))]]
-    [:div.col.s3 [:h5 (player-score (:player2 @app-state))]]]])
+    [player-score (:player1 @app-state)]
+    [player-score (:player2 @app-state)]]])
 
 ;; model views
 (defmulti view type)
